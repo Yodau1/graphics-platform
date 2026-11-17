@@ -19,6 +19,12 @@ type UsersService interface {
 		ctx context.Context,
 		id uuid.UUID,
 	) (domain.User, error)
+	CreateUser(
+		ctx context.Context,
+		name string,
+		email string,
+		password string,
+	) (domain.User, error)
 }
 
 func NewUsersHTTPHandler(usersService UsersService) *UsersHTTPHandler {
@@ -30,9 +36,9 @@ func NewUsersHTTPHandler(usersService UsersService) *UsersHTTPHandler {
 func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 	return []core_http_server.Route{
 		{
-			Method:  http.MethodGet,
-			Path:    "/users/{id}",
-			Handler: h.GetUser,
+			Method:  http.MethodPost,
+			Path:    "/users",
+			Handler: h.CreateUser,
 		},
 	}
 }
