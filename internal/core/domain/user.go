@@ -1,6 +1,13 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+	"net/mail"
+	"unicode/utf8"
+
+	core_errors "github.com/Yodau1/graphics-platform/internal/core/errors"
+	"github.com/google/uuid"
+)
 
 type UserRole string
 
@@ -37,4 +44,31 @@ func NewUser(
 		Role:     role,
 		IsActive: isActive,
 	}
+}
+
+func CreateUser(name string, email string) User {
+	return NewUser(
+		uuid.New(),
+		1,
+		name,
+		email,
+		UserRoleUser,
+		true,
+	)
+}
+
+func (u *User) Validate() error {
+	nameLength := utf8.RuneCountInString(u.Name)
+	if nameLength < 3 || nameLength > 100 {
+		return fmt.Errorf(
+			"name must contain 3 to 100 characters: %w",
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	address, err := mail.ParseAddress(u.Email)
+	if err != nil || address.Address != u.Email || utf8.RuneCountInString(u.Email) > 254 {
+		return fmt.Errorf("invalid email address: %w", core_errors.ErrInvalidArgument)
+	}
+	return nil
 }

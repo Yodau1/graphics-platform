@@ -19,6 +19,11 @@ type UsersRepository interface {
 		ctx context.Context,
 		id uuid.UUID,
 	) (domain.User, error)
+	SaveUser(
+		ctx context.Context,
+		user domain.User,
+		passwordHash string,
+	) (domain.User, error)
 }
 
 // NewUsersService создаёт сервис пользователей с внедрённым репозиторием
