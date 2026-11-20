@@ -1,0 +1,1 @@
+DROP TABLE graphics.user_sessions;

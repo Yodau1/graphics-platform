@@ -54,6 +54,15 @@ func (h *HTTPResponseHandler) ErrorResponse(err error, msg string) {
 	case errors.Is(err, core_errors.ErrConflict):
 		statusCode = http.StatusConflict
 		logFunc = h.log.Warn
+	//означает, что пользователь не предъявил действующие учётные данные
+	case errors.Is(err, core_errors.ErrUnauthorized):
+		statusCode = http.StatusUnauthorized
+		logFunc = h.log.Debug
+		h.rw.Header().Set("WWW-Authenticate", "Bearer")
+	//означает, что токен действителен, но прав на операцию нет
+	case errors.Is(err, core_errors.ErrForbidden):
+		statusCode = http.StatusForbidden
+		logFunc = h.log.Debug
 	default:
 		statusCode = http.StatusInternalServerError
 		logFunc = h.log.Error
@@ -84,4 +93,9 @@ func (h *HTTPResponseHandler) errorResponse(statusCode int, err error, msg strin
 		Error:   errorText,
 		Message: msg,
 	}, statusCode)
+}
+
+// Отправляем статус код без json ответа
+func (h *HTTPResponseHandler) NoContentResponse() {
+	h.rw.WriteHeader(http.StatusNoContent)
 }

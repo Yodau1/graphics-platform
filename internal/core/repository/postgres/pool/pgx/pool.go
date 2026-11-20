@@ -9,6 +9,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Pool — конкретная реализация интерфейса core_postgres_pool.Pool
+// на базе pgxpool.Pool (пул соединений pgx).
+//
+// Встраивание *pgxpool.Pool даёт доступ ко всем методам pgx,
+// но мы переопределяем Query/QueryRow/Exec, чтобы:
+//  1. Оборачивать результаты в наши интерфейсы (Rows, Row, CommandTag)
+//  2. Скрывать зависимость от pgx от слоя репозиториев
+
 //Подключение env параметров в конфиг
 
 type Pool struct {
@@ -82,7 +90,7 @@ func (p *Pool) Exec(
 ) (core_postgres_pool.CommandTag, error) {
 	tag, err := p.Pool.Exec(ctx, sql, arguments...)
 	if err != nil {
-		return nil, err
+		return nil, mapErrors(err)
 	}
 
 	return pgxCommandTag{tag}, nil

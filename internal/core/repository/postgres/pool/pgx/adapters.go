@@ -1,3 +1,5 @@
+// Package core_pgx_pool содержит конкретную реализацию интерфейса Pool
+// на базе библиотеки jackc/pgx/v5
 package core_pgx_pool
 
 import (
@@ -31,9 +33,13 @@ type pgxCommandTag struct {
 	pgconn.CommandTag
 }
 
+// mapErrors преобразует специфические ошибки pgx в типизированные ошибки пакета pool.
 func mapErrors(err error) error {
 	//Ошбика PostgreSQL "нарушение внешнего ключа"
-	const pgxViolatesForeignKeyErrorCode = "23503"
+	const (
+		pgxViolatesForeignKeyErrorCode = "23503"
+		pgxViolatesUniqueErrorCode     = "23505"
+	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		return core_postgres_pool.ErrNoRows
@@ -42,19 +48,14 @@ func mapErrors(err error) error {
 	// Проверяем, является ли ошибка структурированной PostgreSQL-ошибкой.
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
-		if pgErr.Code == pgxViolatesForeignKeyErrorCode {
-			return fmt.Errorf(
-				"%w: %w",
-				err,
-				core_postgres_pool.ErrViolatesForeignKey,
-			)
+		switch pgErr.Code {
+		case pgxViolatesForeignKeyErrorCode:
+			return fmt.Errorf("%w: %w", err, core_postgres_pool.ErrViolatesForeignKey)
+		case pgxViolatesUniqueErrorCode:
+			return fmt.Errorf("%w: %w", err, core_postgres_pool.ErrViolatesUnique)
 		}
 	}
 
 	// Все остальные ошибки оборачиваем в ErrUnknown.
-	return fmt.Errorf(
-		"%v: %w",
-		err,
-		core_postgres_pool.ErrUnknown,
-	)
+	return fmt.Errorf("%v: %w", err, core_postgres_pool.ErrUnknown)
 }
