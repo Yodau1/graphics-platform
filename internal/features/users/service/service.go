@@ -2,6 +2,7 @@ package users_service
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -24,6 +25,31 @@ type UsersRepository interface {
 		user domain.User,
 		passwordHash string,
 	) (domain.User, error)
+	UpdateUser(
+		ctx context.Context,
+		user domain.User,
+	) (domain.User, error)
+	DeleteUser(
+		ctx context.Context,
+		id uuid.UUID,
+	) error
+	GetUserCredentials(
+		ctx context.Context,
+		email string,
+	) (uuid.UUID, string, bool, error)
+	SaveUserSession(
+		ctx context.Context,
+		userID uuid.UUID,
+		tokenHash []byte,
+		expiresAt time.Time,
+	) error
+	GetUserBySession(ctx context.Context,
+		tokenHash []byte,
+	) (domain.User, error)
+	DeleteUserSession(
+		ctx context.Context,
+		tokenHash []byte,
+	) error
 }
 
 // NewUsersService создаёт сервис пользователей с внедрённым репозиторием

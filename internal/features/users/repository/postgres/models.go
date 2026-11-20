@@ -16,6 +16,7 @@ type userModel struct {
 	Version  int64
 }
 
+// Scan записывает поля результата row в userModel
 func (m *userModel) Scan(row core_postgres_pool.Row) error {
 	return row.Scan(
 		&m.ID,

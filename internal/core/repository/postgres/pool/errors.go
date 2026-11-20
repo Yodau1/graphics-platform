@@ -7,4 +7,6 @@ var (
 	ErrNoRows             = errors.New("no rows")
 	ErrViolatesForeignKey = errors.New("violates foreign key")
 	ErrUnknown            = errors.New("unknown")
+	//для ошибки нарушения уникальности значения код: 23505
+	ErrViolatesUnique = errors.New("violates unique constraint")
 )
