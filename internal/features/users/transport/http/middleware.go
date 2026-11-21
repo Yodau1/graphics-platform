@@ -79,3 +79,7 @@ func (h *UsersHTTPHandler) authorizeUser(adminOnly bool) core_http_middleware.Mi
 		})
 	}
 }
+
+func (h *UsersHTTPHandler) RequireAdmin() core_http_middleware.Middleware {
+	return h.authorizeUser(true)
+}
