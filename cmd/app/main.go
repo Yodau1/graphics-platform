@@ -13,6 +13,9 @@ import (
 	core_pgx_pool "github.com/Yodau1/graphics-platform/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "github.com/Yodau1/graphics-platform/internal/core/transport/http/middleware"
 	core_http_server "github.com/Yodau1/graphics-platform/internal/core/transport/http/server"
+	categories_postgres_repository "github.com/Yodau1/graphics-platform/internal/features/categories/repository/postgres"
+	categories_service "github.com/Yodau1/graphics-platform/internal/features/categories/service"
+	categories_transport_http "github.com/Yodau1/graphics-platform/internal/features/categories/transport/http"
 	users_postgres_repository "github.com/Yodau1/graphics-platform/internal/features/users/repository/postgres"
 	users_service "github.com/Yodau1/graphics-platform/internal/features/users/service"
 	users_transport_http "github.com/Yodau1/graphics-platform/internal/features/users/transport/http"
@@ -46,6 +49,13 @@ func main() {
 	usersService := users_service.NewUsersService(usersRepository)
 	usersHTTPHandler := users_transport_http.NewUsersHTTPHandler(usersService)
 
+	categoriesRepository := categories_postgres_repository.NewCategoriesRepository(postgresPool)
+	categoriesService := categories_service.NewCategoriesService(categoriesRepository)
+	categoriesHTTPHandler := categories_transport_http.NewCategoriesHTTPHandler(
+		categoriesService,
+		usersHTTPHandler.RequireAdmin(),
+	)
+
 	httpServer := core_http_server.NewHTTPServer(
 		core_http_server.NewConfigMust(),
 		logger,
@@ -57,6 +67,7 @@ func main() {
 
 	apiV1 := core_http_server.NewAPIVersionRouter(core_http_server.APIVersion1)
 	apiV1.AddRoutes(usersHTTPHandler.Routes()...)
+	apiV1.AddRoutes(categoriesHTTPHandler.Routes()...)
 	httpServer.RegisterAPIRouters(apiV1)
 
 	if err := httpServer.Run(ctx); err != nil {
