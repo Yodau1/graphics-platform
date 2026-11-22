@@ -50,6 +50,10 @@ type UsersRepository interface {
 		ctx context.Context,
 		tokenHash []byte,
 	) error
+	BecomeAuthor(
+		ctx context.Context,
+		id uuid.UUID,
+	) (domain.User, error)
 }
 
 // NewUsersService создаёт сервис пользователей с внедрённым репозиторием

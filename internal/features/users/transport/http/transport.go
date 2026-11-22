@@ -49,6 +49,10 @@ type UsersService interface {
 		ctx context.Context,
 		token string,
 	) error
+	BecomeAuthor(
+		ctx context.Context,
+		token string,
+	) (domain.User, error)
 }
 
 func NewUsersHTTPHandler(usersService UsersService) *UsersHTTPHandler {
@@ -91,6 +95,11 @@ func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 			Method:  http.MethodPost,
 			Path:    "/auth/logout",
 			Handler: h.Logout,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/users/me/author",
+			Handler: h.BecomeAuthor,
 		},
 	}
 }
