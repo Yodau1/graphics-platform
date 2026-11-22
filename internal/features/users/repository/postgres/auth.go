@@ -82,8 +82,10 @@ func (r *UsersRepository) GetUserBySession(
 		WHERE s.token_hash = $1 AND s.expires_at > now() AND u.is_active;
 	`
 
+	row := r.pool.QueryRow(ctx, query, tokenHash)
+
 	var model userModel
-	if err := model.Scan(r.pool.QueryRow(ctx, query, tokenHash)); err != nil {
+	if err := model.Scan(row); err != nil {
 		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return domain.User{}, core_errors.ErrNotFound
 		}
