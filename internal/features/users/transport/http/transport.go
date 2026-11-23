@@ -13,7 +13,8 @@ import (
 )
 
 type UsersHTTPHandler struct {
-	usersService UsersService
+	usersService         UsersService
+	requireAuthenticated core_http_middleware.Middleware
 }
 
 type UsersService interface {
@@ -41,10 +42,6 @@ type UsersService interface {
 		email string,
 		password string,
 	) (string, time.Time, error)
-	Authenticate(
-		ctx context.Context,
-		token string,
-	) (domain.User, error)
 	Logout(
 		ctx context.Context,
 		token string,
@@ -55,13 +52,27 @@ type UsersService interface {
 	) (domain.User, error)
 }
 
-func NewUsersHTTPHandler(usersService UsersService) *UsersHTTPHandler {
+func NewUsersHTTPHandler(
+	usersService UsersService,
+	requireAuthenticated core_http_middleware.Middleware,
+) *UsersHTTPHandler {
 	return &UsersHTTPHandler{
-		usersService: usersService,
+		usersService:         usersService,
+		requireAuthenticated: requireAuthenticated,
 	}
 }
 
 func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
+
+	profileMiddleware := []core_http_middleware.Middleware{
+		h.requireAuthenticated,
+		requireProfileAccess(),
+	}
+	adminMiddleware := []core_http_middleware.Middleware{
+		h.requireAuthenticated,
+		core_http_middleware.RequireAdmin(),
+	}
+
 	return []core_http_server.Route{
 		{
 			Method:  http.MethodPost,
@@ -77,19 +88,19 @@ func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 			Method:     http.MethodGet,
 			Path:       "/users/{id}",
 			Handler:    h.GetUser,
-			Middleware: []core_http_middleware.Middleware{h.authorizeUser(false)},
+			Middleware: profileMiddleware,
 		},
 		{
 			Method:     http.MethodPatch,
 			Path:       "/users/{id}",
 			Handler:    h.PatchUser,
-			Middleware: []core_http_middleware.Middleware{h.authorizeUser(false)},
+			Middleware: profileMiddleware,
 		},
 		{
 			Method:     http.MethodDelete,
 			Path:       "/users/{id}",
 			Handler:    h.DeleteUser,
-			Middleware: []core_http_middleware.Middleware{h.authorizeUser(true)},
+			Middleware: adminMiddleware,
 		},
 		{
 			Method:  http.MethodPost,

@@ -39,6 +39,26 @@ type ResourcesService interface {
 		user domain.User,
 		id uuid.UUID,
 	) error
+	UploadResourceFile(
+		ctx context.Context,
+		user domain.User,
+		resourceID uuid.UUID,
+		kind domain.ResourceFileKind,
+		originalName string,
+		data []byte,
+	) (domain.ResourceFile, error)
+	GetResourceFiles(
+		ctx context.Context,
+		user domain.User,
+		resourceID uuid.UUID,
+	) ([]domain.ResourceFile, error)
+
+	DeleteResourceFile(
+		ctx context.Context,
+		user domain.User,
+		resourceID uuid.UUID,
+		fileID uuid.UUID,
+	) error
 }
 
 type SessionAuthenticator interface {
@@ -46,23 +66,23 @@ type SessionAuthenticator interface {
 }
 
 type ResourcesHTTPHandler struct {
-	resourcesService ResourcesService
-	authenticator    SessionAuthenticator
+	resourcesService     ResourcesService
+	requireAuthenticated core_http_middleware.Middleware
 }
 
 func NewResourcesHTTPHandler(
 	resourcesService ResourcesService,
-	authenticator SessionAuthenticator,
+	requireAuthenticated core_http_middleware.Middleware,
 ) *ResourcesHTTPHandler {
 	return &ResourcesHTTPHandler{
-		resourcesService: resourcesService,
-		authenticator:    authenticator,
+		resourcesService:     resourcesService,
+		requireAuthenticated: requireAuthenticated,
 	}
 }
 
 func (h *ResourcesHTTPHandler) Routes() []core_http_server.Route {
 	// Оба маршрута работают с закрытыми карточками и требуют сессию
-	auth := []core_http_middleware.Middleware{h.requireAuthenticatedUser()}
+	auth := []core_http_middleware.Middleware{h.requireAuthenticated}
 
 	return []core_http_server.Route{
 		{
@@ -93,6 +113,24 @@ func (h *ResourcesHTTPHandler) Routes() []core_http_server.Route {
 			Method:     http.MethodDelete,
 			Path:       "/resources/{id}",
 			Handler:    h.DeleteResource,
+			Middleware: auth,
+		},
+		{
+			Method:     http.MethodPost,
+			Path:       "/resources/{id}/files",
+			Handler:    h.UploadResourceFile,
+			Middleware: auth,
+		},
+		{
+			Method:     http.MethodGet,
+			Path:       "/resources/{id}/files",
+			Handler:    h.GetResourceFiles,
+			Middleware: auth,
+		},
+		{
+			Method:     http.MethodDelete,
+			Path:       "/resources/{id}/files/{fileId}",
+			Handler:    h.DeleteResourceFile,
 			Middleware: auth,
 		},
 	}

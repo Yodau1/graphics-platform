@@ -25,14 +25,38 @@ type ResourcesRepository interface {
 		ctx context.Context,
 		resource domain.Resource,
 	) (domain.Resource, error)
+	SaveResourceFile(
+		ctx context.Context,
+		resource domain.Resource,
+		file domain.ResourceFile,
+	) error
+	GetResourceFiles(
+		ctx context.Context,
+		resourceID uuid.UUID,
+	) ([]domain.ResourceFile, error)
+	DeleteResourceFile(
+		ctx context.Context,
+		resource domain.Resource,
+		fileID uuid.UUID,
+	) error
+}
+
+type ResourceFileStorage interface {
+	SaveFile(ctx context.Context, key string, data []byte) error
+	DeleteFile(key string) error
 }
 
 type ResourcesService struct {
 	resourcesRepository ResourcesRepository
+	fileStorage         ResourceFileStorage
 }
 
-func NewResourcesService(resourcesRepository ResourcesRepository) *ResourcesService {
+func NewResourcesService(
+	resourcesRepository ResourcesRepository,
+	fileStorage ResourceFileStorage,
+) *ResourcesService {
 	return &ResourcesService{
 		resourcesRepository: resourcesRepository,
+		fileStorage:         fileStorage,
 	}
 }

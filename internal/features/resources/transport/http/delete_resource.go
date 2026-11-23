@@ -5,6 +5,7 @@ import (
 
 	core_errors "github.com/Yodau1/graphics-platform/internal/core/errors"
 	core_logger "github.com/Yodau1/graphics-platform/internal/core/logger"
+	core_http_middleware "github.com/Yodau1/graphics-platform/internal/core/transport/http/middleware"
 	core_http_request "github.com/Yodau1/graphics-platform/internal/core/transport/http/request"
 	core_http_response "github.com/Yodau1/graphics-platform/internal/core/transport/http/response"
 )
@@ -14,7 +15,7 @@ func (h *ResourcesHTTPHandler) DeleteResource(rw http.ResponseWriter, r *http.Re
 	log := core_logger.FromContext(ctx)
 	responseHandler := core_http_response.NewHTTPResponseHandler(log, rw)
 
-	user, ok := authenticatedUserFromContext(ctx)
+	user, ok := core_http_middleware.AuthenticatedUserFromContext(ctx)
 	if !ok {
 		responseHandler.ErrorResponse(core_errors.ErrUnauthorized, "authenticated user required")
 		return
