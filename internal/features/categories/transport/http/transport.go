@@ -12,8 +12,8 @@ import (
 )
 
 type CategoriesHTTPHandler struct {
-	categoriesService CategoriesService
-	requireAdmin      core_http_middleware.Middleware
+	categoriesService    CategoriesService
+	requireAuthenticated core_http_middleware.Middleware
 }
 
 type CategoriesService interface {
@@ -41,16 +41,19 @@ type CategoriesService interface {
 
 func NewCategoriesHTTPHandler(
 	categoriesService CategoriesService,
-	requireAdmin core_http_middleware.Middleware,
+	requireAuthenticated core_http_middleware.Middleware,
 ) *CategoriesHTTPHandler {
 	return &CategoriesHTTPHandler{
-		categoriesService: categoriesService,
-		requireAdmin:      requireAdmin,
+		categoriesService:    categoriesService,
+		requireAuthenticated: requireAuthenticated,
 	}
 }
 
 func (h *CategoriesHTTPHandler) Routes() []core_http_server.Route {
-	adminMiddleware := []core_http_middleware.Middleware{h.requireAdmin}
+	adminMiddleware := []core_http_middleware.Middleware{
+		h.requireAuthenticated,
+		core_http_middleware.RequireAdmin(),
+	}
 
 	return []core_http_server.Route{
 		{

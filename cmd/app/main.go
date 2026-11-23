@@ -16,6 +16,7 @@ import (
 	categories_postgres_repository "github.com/Yodau1/graphics-platform/internal/features/categories/repository/postgres"
 	categories_service "github.com/Yodau1/graphics-platform/internal/features/categories/service"
 	categories_transport_http "github.com/Yodau1/graphics-platform/internal/features/categories/transport/http"
+	resources_filesystem_repository "github.com/Yodau1/graphics-platform/internal/features/resources/repository/filesystem"
 	resources_postgres_repository "github.com/Yodau1/graphics-platform/internal/features/resources/repository/postgres"
 	resources_service "github.com/Yodau1/graphics-platform/internal/features/resources/service"
 	resources_transport_http "github.com/Yodau1/graphics-platform/internal/features/resources/transport/http"
@@ -48,20 +49,28 @@ func main() {
 	}
 	defer postgresPool.Close()
 
+	//Получаем путь, куда сохранять файлы
+	fileStorageConfig, err := resources_filesystem_repository.NewConfig()
+	if err != nil {
+		logger.Fatal("failed to load resource file storage config", zap.Error(err))
+	}
+
+	resourceFileStorage := resources_filesystem_repository.NewResourceFileStorage(
+		fileStorageConfig.Folder,
+	)
+
 	usersRepository := users_postgres_repository.NewUsersRepository(postgresPool)
 	usersService := users_service.NewUsersService(usersRepository)
-	usersHTTPHandler := users_transport_http.NewUsersHTTPHandler(usersService)
+	requireAuthenticated := core_http_middleware.RequireAuthenticatedUser(usersService)
+	usersHTTPHandler := users_transport_http.NewUsersHTTPHandler(usersService, requireAuthenticated)
 
 	resourcesRepository := resources_postgres_repository.NewResourcesRepository(postgresPool)
-	resourcesService := resources_service.NewResourcesService(resourcesRepository)
-	resourcesHTTPHandler := resources_transport_http.NewResourcesHTTPHandler(resourcesService, usersService)
+	resourcesService := resources_service.NewResourcesService(resourcesRepository, resourceFileStorage)
+	resourcesHTTPHandler := resources_transport_http.NewResourcesHTTPHandler(resourcesService, requireAuthenticated)
 
 	categoriesRepository := categories_postgres_repository.NewCategoriesRepository(postgresPool)
 	categoriesService := categories_service.NewCategoriesService(categoriesRepository)
-	categoriesHTTPHandler := categories_transport_http.NewCategoriesHTTPHandler(
-		categoriesService,
-		usersHTTPHandler.RequireAdmin(),
-	)
+	categoriesHTTPHandler := categories_transport_http.NewCategoriesHTTPHandler(categoriesService, requireAuthenticated)
 
 	httpServer := core_http_server.NewHTTPServer(
 		core_http_server.NewConfigMust(),
