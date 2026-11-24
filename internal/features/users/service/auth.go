@@ -33,7 +33,7 @@ func (s *UsersService) Login(
 	}
 
 	//Сравниваем переданный пароль с хешем того, что лежит в БД
-	if err := bcrypt.CompareHashAndPassword([]byte(password), []byte(passwordHash)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return "", time.Time{}, core_errors.ErrUnauthorized
 		}

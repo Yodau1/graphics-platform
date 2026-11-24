@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"image/jpeg"
 	"image/png"
-	"strings"
 
 	"github.com/google/uuid"
 
@@ -44,30 +43,9 @@ func (s *ResourcesService) UploadResourceFile(
 		return domain.ResourceFile{}, fmt.Errorf("resource is archived: %w", core_errors.ErrConflict)
 	}
 
-	originalName = strings.TrimSpace(originalName)
-	if originalName == "" || len(originalName) > 255 ||
-		len(data) == 0 || len(data) > MaxResourceFileSize {
-		return domain.ResourceFile{}, fmt.Errorf("invalid file name or size: %w", core_errors.ErrInvalidArgument)
-	}
-
-	format := getResourceFileFormat(data)
-	switch kind {
-	// Для оригинала допустим любой из распознанных форматов
-	case domain.ResourceFileKindOriginal:
-	case domain.ResourceFileKindImage:
-		if format != "png" && format != "jpeg" {
-			format = ""
-		}
-	case domain.ResourceFileKindPreview3D:
-		if format != "glb" {
-			format = ""
-		}
-	default:
-		format = ""
-	}
-
-	if format == "" {
-		return domain.ResourceFile{}, fmt.Errorf("unsupported format for file kind: %w", core_errors.ErrInvalidArgument)
+	originalName, format, err := validateResourceFile(kind, originalName, data)
+	if err != nil {
+		return domain.ResourceFile{}, err
 	}
 
 	file := domain.CreateResourceFile(resource.ID, kind, originalName, format, int64(len(data)))
