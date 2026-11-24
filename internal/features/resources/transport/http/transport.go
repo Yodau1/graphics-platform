@@ -59,6 +59,14 @@ type ResourcesService interface {
 		resourceID uuid.UUID,
 		fileID uuid.UUID,
 	) error
+	ReplaceResourceFile(
+		ctx context.Context,
+		user domain.User,
+		resourceID uuid.UUID,
+		fileID uuid.UUID,
+		originalName string,
+		data []byte,
+	) (domain.ResourceFile, error)
 }
 
 type SessionAuthenticator interface {
@@ -131,6 +139,12 @@ func (h *ResourcesHTTPHandler) Routes() []core_http_server.Route {
 			Method:     http.MethodDelete,
 			Path:       "/resources/{id}/files/{fileId}",
 			Handler:    h.DeleteResourceFile,
+			Middleware: auth,
+		},
+		{
+			Method:     http.MethodPut,
+			Path:       "/resources/{id}/files/{fileId}",
+			Handler:    h.ReplaceResourceFile,
 			Middleware: auth,
 		},
 	}

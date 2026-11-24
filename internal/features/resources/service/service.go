@@ -39,6 +39,17 @@ type ResourcesRepository interface {
 		resource domain.Resource,
 		fileID uuid.UUID,
 	) error
+	GetResourceFile(
+		ctx context.Context,
+		resourceID uuid.UUID,
+		fileID uuid.UUID,
+	) (domain.ResourceFile, error)
+	ReplaceResourceFile(
+		ctx context.Context,
+		resource domain.Resource,
+		oldFile domain.ResourceFile,
+		newFile domain.ResourceFile,
+	) error
 }
 
 type ResourceFileStorage interface {
