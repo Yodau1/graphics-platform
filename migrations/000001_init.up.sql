@@ -1,5 +1,6 @@
 CREATE SCHEMA graphics;
 
+--учетные записи и роли
 CREATE TABLE graphics.users (
     id UUID PRIMARY KEY,
     name VARCHAR(100) NOT NULL CHECK (char_length(name) BETWEEN 3 AND 100),
@@ -9,18 +10,18 @@ CREATE TABLE graphics.users (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     version BIGINT NOT NULL DEFAULT 1 CHECK (version > 0)
 );
-
+--разделы каталога
 CREATE TABLE graphics.categories (
     id UUID PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE CHECK (char_length(name) BETWEEN 1 AND 100),
     version BIGINT NOT NULL DEFAULT 1 CHECK (version > 0)
 );
-
+--метки для поиска и фильтрации
 CREATE TABLE graphics.tags (
     id UUID PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE CHECK (char_length(name) BETWEEN 1 AND 100)
 );
-
+--карточки
 CREATE TABLE graphics.resources (
     id UUID PRIMARY KEY,
     author_id UUID NOT NULL REFERENCES graphics.users (id),
@@ -38,7 +39,7 @@ CREATE TABLE graphics.resources (
 
     CHECK (updated_at >= created_at)
 );
-
+--ресурсы для карточки
 CREATE TABLE graphics.resource_files (
     id UUID PRIMARY KEY,
     resource_id UUID NOT NULL REFERENCES graphics.resources (id),
@@ -52,14 +53,14 @@ CREATE TABLE graphics.resource_files (
 
     CHECK (retired_at IS NULL OR retired_at >= created_at)
 );
-
+--теги карточки
 CREATE TABLE graphics.resource_tags (
     resource_id UUID NOT NULL REFERENCES graphics.resources (id),
     tag_id UUID NOT NULL REFERENCES graphics.tags (id),
 
     PRIMARY KEY (resource_id, tag_id)
 );
-
+--избранное
 CREATE TABLE graphics.favorites (
     user_id UUID NOT NULL REFERENCES graphics.users (id),
     resource_id UUID NOT NULL REFERENCES graphics.resources (id),
@@ -67,7 +68,7 @@ CREATE TABLE graphics.favorites (
 
     PRIMARY KEY (user_id, resource_id)
 );
-
+--решения проверки
 CREATE TABLE graphics.moderation_reviews (
     id UUID PRIMARY KEY,
     resource_id UUID NOT NULL REFERENCES graphics.resources (id),
@@ -80,7 +81,7 @@ CREATE TABLE graphics.moderation_reviews (
     UNIQUE (resource_id, reviewed_version),
     CHECK (decision <> 'rejected' OR char_length(comment) > 0)
 );
-
+--история изменений карточек и файлов
 CREATE TABLE graphics.resource_events (
     id UUID PRIMARY KEY,
     resource_id UUID NOT NULL REFERENCES graphics.resources (id),
@@ -89,13 +90,13 @@ CREATE TABLE graphics.resource_events (
     details JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
+--просмотры опубликованных карточек
 CREATE TABLE graphics.resource_views (
     id UUID PRIMARY KEY,
     resource_id UUID NOT NULL REFERENCES graphics.resources (id),
     viewed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
+--история выдачи оригиналов и источник статистики
 CREATE TABLE graphics.downloads (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES graphics.users (id),
