@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -12,6 +13,7 @@ import (
 
 //Файловое хранилище
 //Создаем каталог для ресурса
+//Удаление и запись файлов на диск + чтение
 
 type ResourceFileStorage struct {
 	//Хранит путь к общему каталогу
@@ -68,4 +70,34 @@ func (s *ResourceFileStorage) DeleteFile(key string) error {
 	}
 
 	return err
+}
+
+// Окрывает содержимое ресурса для чтения по ключу хранения.
+// Вызывающий код закрывает файл после использования.
+func (s *ResourceFileStorage) OpenFile(
+	ctx context.Context,
+	key string,
+	//io.ReadSeekCloser позволяет читать файл, перемещаться по нему и закрывать его
+) (io.ReadSeekCloser, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	// Parse разбирает UUID, а String возвращает его стандартную запись.
+	// Принимаем ключи в том же формате, в котором их создаёт приложение.
+	id, err := uuid.Parse(key)
+	if err != nil || id.String() != key {
+		return nil, fmt.Errorf("invalid resource file storage key")
+	}
+
+	//Получаем туь к файлу = общий путь + ключ
+	path := filepath.Join(s.root, key)
+
+	// Open открывает файл только для чтения.
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open resource file: %w", err)
+	}
+
+	return file, nil
 }
