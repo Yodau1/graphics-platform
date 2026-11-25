@@ -50,6 +50,21 @@ type ResourcesRepository interface {
 		oldFile domain.ResourceFile,
 		newFile domain.ResourceFile,
 	) error
+	SubmitResource(
+		ctx context.Context,
+		resource domain.Resource,
+	) (domain.Resource, error)
+	GetPendingResources(
+		ctx context.Context,
+	) ([]domain.Resource, error)
+	ReviewResource(
+		ctx context.Context,
+		resourceID uuid.UUID,
+		moderatorID uuid.UUID,
+		version int64,
+		decision string,
+		comment string,
+	) (domain.Resource, error)
 }
 
 type ResourceFileStorage interface {

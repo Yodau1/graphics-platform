@@ -67,6 +67,22 @@ type ResourcesService interface {
 		originalName string,
 		data []byte,
 	) (domain.ResourceFile, error)
+	SubmitResource(
+		ctx context.Context,
+		user domain.User,
+		resourceID uuid.UUID,
+	) (domain.Resource, error)
+	GetPendingResources(
+		ctx context.Context,
+	) ([]domain.Resource, error)
+	ReviewResource(
+		ctx context.Context,
+		moderator domain.User,
+		resourceID uuid.UUID,
+		version int64,
+		decision string,
+		comment string,
+	) (domain.Resource, error)
 }
 
 type SessionAuthenticator interface {
@@ -91,6 +107,13 @@ func NewResourcesHTTPHandler(
 func (h *ResourcesHTTPHandler) Routes() []core_http_server.Route {
 	// Оба маршрута работают с закрытыми карточками и требуют сессию
 	auth := []core_http_middleware.Middleware{h.requireAuthenticated}
+
+	adminMiddleware := []core_http_middleware.Middleware{
+		//Определяем пользователя и кладем его в контекст запроса
+		h.requireAuthenticated,
+		//Проверяем роль админа у пользователя
+		core_http_middleware.RequireAdmin(),
+	}
 
 	return []core_http_server.Route{
 		{
@@ -146,6 +169,24 @@ func (h *ResourcesHTTPHandler) Routes() []core_http_server.Route {
 			Path:       "/resources/{id}/files/{fileId}",
 			Handler:    h.ReplaceResourceFile,
 			Middleware: auth,
+		},
+		{
+			Method:     http.MethodPost,
+			Path:       "/resources/{id}/submit",
+			Handler:    h.SubmitResource,
+			Middleware: auth,
+		},
+		{
+			Method:     http.MethodGet,
+			Path:       "/moderation/resources",
+			Handler:    h.GetPendingResources,
+			Middleware: adminMiddleware,
+		},
+		{
+			Method:     http.MethodPost,
+			Path:       "/moderation/resources/{id}/review",
+			Handler:    h.ReviewResource,
+			Middleware: adminMiddleware,
 		},
 	}
 }
