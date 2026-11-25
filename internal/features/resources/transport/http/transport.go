@@ -2,6 +2,7 @@ package resources_transport_http
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -83,6 +84,22 @@ type ResourcesService interface {
 		decision string,
 		comment string,
 	) (domain.Resource, error)
+	GetPublishedResources(
+		ctx context.Context,
+		search string,
+		categoryID *uuid.UUID,
+		limit int,
+		offset int,
+	) ([]domain.Resource, error)
+	GetPublishedResource(
+		ctx context.Context,
+		id uuid.UUID,
+	) (domain.Resource, []domain.ResourceFile, error)
+	GetPublishedPreview(
+		ctx context.Context,
+		resourceID uuid.UUID,
+		fileID uuid.UUID,
+	) (domain.ResourceFile, io.ReadSeekCloser, error)
 }
 
 type SessionAuthenticator interface {
@@ -187,6 +204,21 @@ func (h *ResourcesHTTPHandler) Routes() []core_http_server.Route {
 			Path:       "/moderation/resources/{id}/review",
 			Handler:    h.ReviewResource,
 			Middleware: adminMiddleware,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/catalog/resources",
+			Handler: h.GetPublishedResources,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/catalog/resources/{id}",
+			Handler: h.GetPublishedResource,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/catalog/resources/{id}/previews/{fileId}",
+			Handler: h.GetPublishedPreview,
 		},
 	}
 }

@@ -2,6 +2,7 @@ package resources_service
 
 import (
 	"context"
+	"io"
 
 	"github.com/google/uuid"
 
@@ -65,11 +66,35 @@ type ResourcesRepository interface {
 		decision string,
 		comment string,
 	) (domain.Resource, error)
+	GetPublishedResources(
+		ctx context.Context,
+		search string,
+		categoryID *uuid.UUID,
+		limit int,
+		offset int,
+	) ([]domain.Resource, error)
+	GetPublishedResource(
+		ctx context.Context,
+		id uuid.UUID,
+	) (domain.Resource, error)
+	GetPublishedPreview(
+		ctx context.Context,
+		resourceID uuid.UUID,
+		fileID uuid.UUID,
+	) (domain.ResourceFile, error)
+	GetPublishedPreviews(
+		ctx context.Context,
+		resourceID uuid.UUID,
+	) ([]domain.ResourceFile, error)
 }
 
 type ResourceFileStorage interface {
 	SaveFile(ctx context.Context, key string, data []byte) error
 	DeleteFile(key string) error
+	OpenFile(
+		ctx context.Context,
+		key string,
+	) (io.ReadSeekCloser, error)
 }
 
 type ResourcesService struct {
