@@ -54,6 +54,17 @@ type UsersRepository interface {
 		ctx context.Context,
 		id uuid.UUID,
 	) (domain.User, error)
+	GetUsers(
+		ctx context.Context,
+		limit int,
+		offset int,
+	) ([]domain.User, error)
+	UpdateUserStatus(
+		ctx context.Context,
+		id uuid.UUID,
+		version int64,
+		isActive bool,
+	) (domain.User, error)
 }
 
 // NewUsersService создаёт сервис пользователей с внедрённым репозиторием
