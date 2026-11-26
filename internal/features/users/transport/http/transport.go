@@ -50,6 +50,16 @@ type UsersService interface {
 		ctx context.Context,
 		token string,
 	) (domain.User, error)
+	GetUsers(
+		ctx context.Context,
+		limit int,
+		offset int,
+	) ([]domain.User, error)
+	PatchUserStatus(
+		ctx context.Context,
+		id uuid.UUID,
+		isActive bool,
+	) (domain.User, error)
 }
 
 func NewUsersHTTPHandler(
@@ -111,6 +121,18 @@ func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 			Method:  http.MethodPost,
 			Path:    "/users/me/author",
 			Handler: h.BecomeAuthor,
+		},
+		{
+			Method:     http.MethodGet,
+			Path:       "/users",
+			Handler:    h.GetUsers,
+			Middleware: adminMiddleware,
+		},
+		{
+			Method:     http.MethodPatch,
+			Path:       "/users/{id}/status",
+			Handler:    h.PatchUserStatus,
+			Middleware: adminMiddleware,
 		},
 	}
 }

@@ -86,6 +86,13 @@ type ResourcesRepository interface {
 		ctx context.Context,
 		resourceID uuid.UUID,
 	) ([]domain.ResourceFile, error)
+	HideResource(
+		ctx context.Context,
+		resourceID uuid.UUID,
+		moderatorID uuid.UUID,
+		version int64,
+		reason string,
+	) (domain.Resource, error)
 }
 
 type ResourceFileStorage interface {

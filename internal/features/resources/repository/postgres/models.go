@@ -45,6 +45,6 @@ func modelToDomain(model ResourceModel) domain.Resource {
 		model.Description,
 		domain.ResourceStatus(model.Status),
 		model.CreatedAt,
-		nil,
+		model.UpdatedAt,
 	)
 }

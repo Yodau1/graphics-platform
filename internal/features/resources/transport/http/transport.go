@@ -100,6 +100,13 @@ type ResourcesService interface {
 		resourceID uuid.UUID,
 		fileID uuid.UUID,
 	) (domain.ResourceFile, io.ReadSeekCloser, error)
+	HideResource(
+		ctx context.Context,
+		moderator domain.User,
+		resourceID uuid.UUID,
+		version int64,
+		reason string,
+	) (domain.Resource, error)
 }
 
 type SessionAuthenticator interface {
@@ -219,6 +226,12 @@ func (h *ResourcesHTTPHandler) Routes() []core_http_server.Route {
 			Method:  http.MethodGet,
 			Path:    "/catalog/resources/{id}/previews/{fileId}",
 			Handler: h.GetPublishedPreview,
+		},
+		{
+			Method:     http.MethodPost,
+			Path:       "/moderation/resources/{id}/hide",
+			Handler:    h.HideResource,
+			Middleware: adminMiddleware,
 		},
 	}
 }
